@@ -21,8 +21,8 @@
 // Function declarations: Feel free to add any functions you want.
 void seq_heat_dist(float *, unsigned int, unsigned int);
 void gpu_heat_dist(float *, unsigned int, unsigned int);
-__global__ void kernel_logic(float *, float *, unsigned int);
-void print_matrix(float *, unsigned int); 
+__global__ void kernel_logic(float *, unsigned int);
+void print_matrix(float *, unsigned int);
 
 /*****************************************************************/
 /**** Do NOT CHANGE ANYTHING in main() function ******/
@@ -143,6 +143,7 @@ void seq_heat_dist(float *playground, unsigned int N, unsigned int iterations)
     /* Move new values into old values */
     memcpy((void *)playground, (void *)temp, num_bytes);
   }
+
   print_matrix(playground, N);
 }
 
@@ -154,35 +155,28 @@ void gpu_heat_dist(float *playground, unsigned int N, unsigned int iterations)
   /* Here you have to write any cuda dynamic allocations, any communications between device and host, any number of kernel
      calls, etc. */
 
-  float *d_playground, *d_temp;
+  float *d_playground;
 
   cudaMalloc((void **)&d_playground, N * N * sizeof(float));
-  cudaMalloc((void **)&d_temp, N * N * sizeof(float));
 
   cudaMemcpy(d_playground, playground, N * N * sizeof(float), cudaMemcpyHostToDevice);
 
-  dim3 blockSize(8, 8);
+  dim3 blockSize(16, 16);
   dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (N + blockSize.y - 1) / blockSize.y);
 
   for (int i = 0; i < iterations; i++)
   {
-    kernel_logic<<<gridSize, blockSize>>>(d_playground, d_temp, N);
+    kernel_logic<<<gridSize, blockSize>>>(d_playground, N);
     cudaDeviceSynchronize();
-
-    // Swap pointers to alternate reading and writing between arrays
-    float *tmp = d_playground;
-    d_playground = d_temp;
-    d_temp = tmp;
   }
 
   cudaMemcpy(playground, d_playground, N * N * sizeof(float), cudaMemcpyDeviceToHost);
   print_matrix(playground, N);
 
   cudaFree(d_playground);
-  cudaFree(d_temp);
 }
 
-__global__ void kernel_logic(float *d_playground, float *d_temp, unsigned int N)
+__global__ void kernel_logic(float *d_playground, unsigned int N)
 {
   int row = blockIdx.x * blockDim.x + threadIdx.x;
   int col = blockIdx.y * blockDim.y + threadIdx.y;
@@ -198,14 +192,17 @@ __global__ void kernel_logic(float *d_playground, float *d_temp, unsigned int N)
                         d_playground[index(row, col + 1, N)]) /
                        4.0f;
 
-  d_temp[index(row, col, N)] = update_value;
+  d_playground[index(row, col, N)] = update_value;
 }
 
-void print_matrix(float *matrix, unsigned int N) {
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            printf("%f ", matrix[index(i, j, N)]);
-        }
-        printf("\n");
+void print_matrix(float *matrix, unsigned int N)
+{
+  for (int i = 0; i < N; i++)
+  {
+    for (int j = 0; j < N; j++)
+    {
+      printf("%.1f ", matrix[index(i, j, N)]);
     }
+    printf("\n");
+  }
 }
