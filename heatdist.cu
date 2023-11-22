@@ -164,7 +164,7 @@ void gpu_heat_dist(float *playground, unsigned int N, unsigned int iterations)
 
   // configuration
   dim3 sizeOfBlock(16, 16);
-  dim3 sizeOfGrid((N + blockSize.x - 1) / blockSize.x, (N + blockSize.y - 1) / blockSize.y);
+  dim3 sizeOfGrid((N + sizeOfBlock.x - 1) / sizeOfBlock.x, (N + sizeOfBlock.y - 1) / sizeOfBlock.y);
 
   for (int i = 0; i < iterations; i++)
   {
@@ -203,9 +203,9 @@ __global__ void kernel_logic(float *temp, unsigned int N)
 
 void print_matrix(float *matrix, unsigned int N)
 {
-  for (int row = 0; row < N; i++)
+  for (int row = 0; row < N; row++)
   {
-    for (int col = 0; col < N; j++)
+    for (int col = 0; col < N; col++)
     {
       printf("%f ", matrix[index(row, col, N)]);
     }
