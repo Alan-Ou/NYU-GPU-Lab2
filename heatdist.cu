@@ -22,6 +22,7 @@
 void seq_heat_dist(float *, unsigned int, unsigned int);
 void gpu_heat_dist(float *, unsigned int, unsigned int);
 __global__ void kernel_logic(float *, float *, unsigned int);
+void print_matrix(float *, unsigned int); 
 
 /*****************************************************************/
 /**** Do NOT CHANGE ANYTHING in main() function ******/
@@ -142,6 +143,7 @@ void seq_heat_dist(float *playground, unsigned int N, unsigned int iterations)
     /* Move new values into old values */
     memcpy((void *)playground, (void *)temp, num_bytes);
   }
+  print_matrix(playground, N);
 }
 
 /***************** The GPU version: Write your code here *********************/
@@ -174,6 +176,7 @@ void gpu_heat_dist(float *playground, unsigned int N, unsigned int iterations)
   }
 
   cudaMemcpy(playground, d_playground, N * N * sizeof(float), cudaMemcpyDeviceToHost);
+  print_matrix(playground, N);
 
   cudaFree(d_playground);
   cudaFree(d_temp);
@@ -196,4 +199,13 @@ __global__ void kernel_logic(float *d_playground, float *d_temp, unsigned int N)
                        4.0f;
 
   d_temp[index(row, col, N)] = update_value;
+}
+
+void print_matrix(float *matrix, unsigned int N) {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            printf("%f ", matrix[index(i, j, N)]);
+        }
+        printf("\n");
+    }
 }
